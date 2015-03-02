@@ -1,11 +1,13 @@
+import json
 from pymclevel import alphaMaterials, MCSchematic, MCLevel
+
+displayName = "Chestporter"
 
 inputs = (
     ("Chestporter filter by simoozzay", "label"),
-    ("StorageItems", (alphaMaterials.Chest,alphaMaterials.TrappedChest,alphaMaterials.Furnace,alphaMaterials.LitFurnace,alphaMaterials.Dispenser,alphaMaterials.Hopper,alphaMaterials.Dropper))
 )
 
-displayName = "Chestporter"
+storageItems = [alphaMaterials.Chest.ID,alphaMaterials.TrappedChest.ID,alphaMaterials.Furnace.ID,alphaMaterials.LitFurnace.ID,alphaMaterials.Dispenser.ID,alphaMaterials.Hopper.ID,alphaMaterials.Dropper.ID]
 
 def perform(level, box, options):
     exportChests(level, box, options)
@@ -13,13 +15,28 @@ def perform(level, box, options):
     
 def exportChests(level, box, options):
     print 'exportChest: Started!'
-    storageItems = myOptions["StorageItems"]
+    entities = []
     
-    for iterY in xrange(box.miny,box.maxy): #height
-        for iterZ in xrange(box.minz,box.maxz): #depth
-            for iterX in xrange(box.minx,box.maxx): # width
-                block = level.blockAt(iterX, iterY, iterZ)
-                for storageItem in storageItems:
-                    if block == storageItem.ID:
-                        print 'item %s found at x: %s y: %s z: %s!' % (block, iterX, iterY, iterZ)
-                        
+    for (chunk, slices, point) in level.getChunkSlices(box):
+        for block in chunk.TileEntities:
+            if block["Items"]:
+                x = block["x"].value
+                y = block["y"].value
+                z = block["z"].value
+                
+                items = []
+                for item in block["Items"].value:
+                    items.append({
+                        "slot": item["Slot"].value,
+                        "id": item["id"].value,
+                        "count": item["Count"].value,
+                        "damage": item["Damage"].value
+                    })
+                    
+                entities.append({
+                    "x": x,
+                    "y": y,
+                    "z": z,
+                    "items": items
+                })
+                print entities
