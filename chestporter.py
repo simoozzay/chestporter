@@ -16,8 +16,8 @@ storageItems = [alphaMaterials.Chest.ID,alphaMaterials.TrappedChest.ID,alphaMate
 
 def perform(level, box, options):
     # well you have to make a choice here... there is no gui or stuff...
-    exportChests(level, box, options)
-    #importChests(level, box, options)
+    #exportChests(level, box, options)
+    importChests(level, box, options)
     level.markDirtyBox(box)
     
 def exportChests(level, box, options):
@@ -51,23 +51,41 @@ def exportChests(level, box, options):
     
     with open(file, 'w') as outfile:
         json.dump(entities, outfile)
-                    
+
+def isNumber(string):
+    try:
+        float(string)
+        return True
+    except ValueError:
+        return False
+
 def importChests(level, box, options):
     with open(file) as infile:
         entities = json.load(infile)
         
     for block in entities:
-        e = level.tileEntityAt((int)(block["x"]),(int)(block["y"]),(int)(block["z"]))
-        if e["id"].value in types.values():
-            if "Items" in e:
-                del e["Items"]
-            e["Items"] = TAG_List()
-            for item in block["items"]:
-                i = TAG_Compound()
-                i["id"] = TAG_String(item["id"])
-                i["Damage"] = TAG_Short(item["damage"])
-                i["Count"] = TAG_Byte(item["count"])
-                i["Slot"] = TAG_Byte(item["slot"])
-                e["Items"].append(i)
+        if (block["x"],block["y"],block["z"]) in box:
+            print "block found..."
+            e = level.tileEntityAt((int)(block["x"]),(int)(block["y"]),(int)(block["z"]))
+            if e["id"].value in types.values():
+                if "Items" in e:
+                    del e["Items"]
+                e["Items"] = TAG_List()
+                for item in block["items"]:
+                    i = TAG_Compound()
+                    id = item["id"]
+                    if isNumber(id):
+                        shortVal = True
+                        id = int(id)
+                    else:
+                        shortVal = False
+                    if shortVal:
+                        i["id"] = TAG_Short(id)
+                    else:
+                        i["id"] = TAG_String(id)
+                    i["Damage"] = TAG_Short(item["damage"])
+                    i["Count"] = TAG_Byte(item["count"])
+                    i["Slot"] = TAG_Byte(item["slot"])
+                    e["Items"].append(i)
     for (chunk, slices, point) in level.getChunkSlices(box):
         chunk.dirty = True
