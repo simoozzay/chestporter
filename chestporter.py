@@ -67,10 +67,10 @@ def exportChests(level, box, options):
             z = block["z"].value
             if (x,y,z) in box:
                 if block["id"].value in types.values():
-                    counter = counter + 1
-                    print "chest found at %s %s %s" % (x, y, z)
                     items = []
+                    itemsCounter = 0
                     for item in block["Items"].value:
+                        itemsCounter = itemsCounter + 1
                         id = item["id"].value
                         print "found a item with id %s. testing now for int" % (item["id"].value)
                         if isNumber(item["id"].value):
@@ -81,6 +81,7 @@ def exportChests(level, box, options):
                                     print "id %s is block minecraft:%s" %(item["id"].value, blockid["text_type"])
                                     break
                             print "converted %s to %s" % (item["id"].value, id)
+                            
                         items.append({
                             "slot": item["Slot"].value,
                             "id": id,
@@ -94,6 +95,11 @@ def exportChests(level, box, options):
                         "z": z,
                         "items": items
                     }
+                    
+                    if itemsCounter == 0:
+                        continue
+                    counter = counter + 1
+                    print "chest found at %s %s %s" % (x, y, z)
                     entities.append(entity)
     
     with open(file, 'w') as outfile:
@@ -115,20 +121,20 @@ def importChests(level, box, options):
         
     for block in entities:
         if (block["x"],block["y"],block["z"]) in box:
-            print "checking %s %s %s" % (block["x"],block["y"],block["z"])
+            #print "checking %s %s %s" % (block["x"],block["y"],block["z"])
             e = level.tileEntityAt((int)(block["x"]),(int)(block["y"]),(int)(block["z"]))
             if e == None:
-                print "Im sorry, there is no entity... skip..."
+                #print "Im sorry, there is no entity... skip..."
                 continue
             if e["id"].value in types.values():
-                print "%s found at %s %s %s" % (e["id"].value ,block["x"], block["y"], block["z"])
+                #print "%s found at %s %s %s" % (e["id"].value ,block["x"], block["y"], block["z"])
                 itemcounter = 0
                 if "Items" in e:
                     for asdf in e["Items"]:
                         itemcounter = itemcounter + 1
                     if itemcounter != 0:
                         skipped = skipped + 1
-                        print "%s already filled... next..." % (e["id"].value)
+                        #print "%s already filled... next..." % (e["id"].value)
                     else:
                         e["Items"] = TAG_List()
                         for item in block["items"]:
@@ -139,9 +145,9 @@ def importChests(level, box, options):
                             i["Slot"] = TAG_Byte(item["slot"])
                             e["Items"].append(i)
                             
-                        print "Successfully imported %s" % (e["id"].value)
+                        #print "Successfully imported %s" % (e["id"].value)
                         counter = counter + 1
     for (chunk, slices, point) in level.getChunkSlices(box):
         chunk.dirty = True
-    level.markDirtyBox(box)
+    #level.markDirtyBox(box)
     print "%s chests imported, %s skipped" % (counter, skipped)
